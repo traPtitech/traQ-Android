@@ -1,8 +1,12 @@
-package tech.trapti.q
+package tech.trapti.traq
 
+import android.Manifest
+import android.app.Activity
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -11,10 +15,15 @@ import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.preference.PreferenceManager
 import android.support.customtabs.CustomTabsIntent
+import android.support.v4.app.ActivityCompat
+import android.support.v4.content.ContextCompat
 import android.util.Log
 import android.webkit.*
+import java.io.ByteArrayOutputStream
+import java.lang.Exception
 
 class MainActivity : AppCompatActivity() {
+    private var uploadMessage: ValueCallback<Array<Uri>>? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -23,6 +32,19 @@ class MainActivity : AppCompatActivity() {
             val channel1 = NotificationChannel(NotificationService.CHANNEL_ID_NORMAL, "普通のチャンネル", NotificationManager.IMPORTANCE_DEFAULT)
             val nm = this.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             nm.createNotificationChannel(channel1)
+        }
+
+        if (ContextCompat.checkSelfPermission(this,
+                        Manifest.permission.READ_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                            Manifest.permission.READ_EXTERNAL_STORAGE)) {
+
+            } else {
+                ActivityCompat.requestPermissions(this,
+                        arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
+                        10)
+            }
         }
 
 
@@ -40,7 +62,7 @@ class MainActivity : AppCompatActivity() {
             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                 val host = request!!.url.host
                 Log.d("traq-debug", request.toString())
-                if (host.contains("traq-dev.tokyotech.org")) {
+                if (host!!.contains("traq-dev.tokyotech.org")) {
                     return false
                 } else {
                     val builder = CustomTabsIntent.Builder()
@@ -69,13 +91,31 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        webView.webChromeClient = object: WebChromeClient() {
+            override fun onShowFileChooser(webView: WebView?, filePathCallback: ValueCallback<Array<Uri>>?, fileChooserParams: FileChooserParams?): Boolean {
+                if (uploadMessage != null) {
+                    uploadMessage!!.onReceiveValue(null)
+                    uploadMessage = null
+                }
+                uploadMessage = filePathCallback
+                if (fileChooserParams == null) return false
+                val intent = fileChooserParams.createIntent()
+                try {
+                    startActivityForResult(intent, 10)
+                } catch (e: Exception) {
+                    uploadMessage = null
+                    return false
+                }
+                return true
+            }
+        }
+
         webView.settings.databaseEnabled = true
         webView.settings.javaScriptEnabled = true
         webView.settings.setSupportMultipleWindows(true)
         webView.settings.setSupportZoom(false)
 
         webView.settings.setAppCacheEnabled(true)
-        webView.settings.cacheMode = WebSettings.LOAD_CACHE_ELSE_NETWORK
 
         webView.settings.userAgentString += " traQ-Android"
 
@@ -98,7 +138,19 @@ class MainActivity : AppCompatActivity() {
             NotificationService.notificationIDMap.remove(channelID)
             NotificationService.notificationMap.remove(channelID)
         }
+    }
 
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        if (requestCode == 10) {
+            if (uploadMessage == null) {
+                return
+            }
+            uploadMessage!!.onReceiveValue(
+                    WebChromeClient.FileChooserParams.parseResult(resultCode, data)
+            )
+            uploadMessage = null
+        }
+        super.onActivityResult(requestCode, resultCode, data)
     }
 }
 

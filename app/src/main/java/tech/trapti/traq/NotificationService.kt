@@ -1,4 +1,4 @@
-package tech.trapti.q
+package tech.trapti.traq
 
 import android.app.*
 import android.content.Context
