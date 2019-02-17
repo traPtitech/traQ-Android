@@ -44,7 +44,7 @@ class NotificationService : FirebaseMessagingService() {
                     .setGroupSummary(true)
                     .setGroup(GROUP_KEY)
                     .setContentTitle("traQ")
-                    .setSmallIcon(R.drawable.notification_icon_background)
+                    .setSmallIcon(R.drawable.status_icon)
                     .setColor(ContextCompat.getColor(this, R.color.colorPrimary))
                     .setDefaults(Notification.DEFAULT_ALL)
                     .setAutoCancel(true) // 重要。各通知がすべて消えた時に、サマリーも自動で消える
@@ -62,7 +62,7 @@ class NotificationService : FirebaseMessagingService() {
                         .setStyle(NotificationCompat.BigTextStyle()
                                 .setBigContentTitle(title)
                                 .bigText(body))
-                        .setSmallIcon(R.drawable.notification_icon_background)
+                        .setSmallIcon(R.drawable.status_icon)
                         .setContentTitle(title)
                         .setContentText(body)
                         .setColor(Color.rgb(0x0D, 0x67, 0xEA))
@@ -77,7 +77,7 @@ class NotificationService : FirebaseMessagingService() {
                 }
             }else {
                 mBuilder = NotificationCompat.Builder(this, CHANNEL_ID_NORMAL)
-                        .setSmallIcon(R.drawable.notification_icon_background)
+                        .setSmallIcon(R.drawable.status_icon)
                         .setContentTitle(title)
                         .setContentText((bodyList.size+1).toString() + "件の新規メッセージ" )
                         .setGroup(GROUP_KEY)
