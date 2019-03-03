@@ -63,14 +63,18 @@ class MainActivity : AppCompatActivity() {
                 super.onPageStarted(view, url, favicon)
             }
             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+
                 Log.d("traq-debug", request.toString())
-                if (request!!.url.host!!.contains(host)) {
+                val requestHost = request?.url?.host
+
+                if (request == null || requestHost == null || requestHost.contains(host)) {
                     return false
                 } else {
                     val builder = CustomTabsIntent.Builder()
                     builder.addDefaultShareMenuItem()
 
                     val customTabsIntent = builder.build()
+                    customTabsIntent.intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 
                     customTabsIntent.launchUrl(applicationContext, request.url)
                     return true
