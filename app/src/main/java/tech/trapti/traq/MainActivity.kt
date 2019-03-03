@@ -24,6 +24,7 @@ import java.lang.Exception
 
 class MainActivity : AppCompatActivity() {
     private var uploadMessage: ValueCallback<Array<Uri>>? = null
+    private var host : String = "q.trap.jp"
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -56,13 +57,14 @@ class MainActivity : AppCompatActivity() {
 
         val webView = findViewById(R.id.webView) as WebView
 
-        webView.loadUrl("https://traq-dev.tokyotech.org")
 
         webView.webViewClient = object : WebViewClient() {
+            override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
+                super.onPageStarted(view, url, favicon)
+            }
             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
-                val host = request!!.url.host
                 Log.d("traq-debug", request.toString())
-                if (host!!.contains("traq-dev.tokyotech.org")) {
+                if (request!!.url.host!!.contains(host)) {
                     return false
                 } else {
                     val builder = CustomTabsIntent.Builder()
@@ -77,7 +79,7 @@ class MainActivity : AppCompatActivity() {
 
             override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
                 Log.d("traq-debug", url)
-                if (Uri.parse(url).host.contains("traq-dev.tokyotech.org")) {
+                if (Uri.parse(url).host.contains(host)) {
                     return false
                 } else {
                     val builder = CustomTabsIntent.Builder()
@@ -112,7 +114,6 @@ class MainActivity : AppCompatActivity() {
 
         webView.settings.databaseEnabled = true
         webView.settings.javaScriptEnabled = true
-        webView.settings.setSupportMultipleWindows(true)
         webView.settings.setSupportZoom(false)
 
         webView.settings.setAppCacheEnabled(true)
@@ -121,6 +122,7 @@ class MainActivity : AppCompatActivity() {
 
 
         webView.addJavascriptInterface(Bridge(token), "Bridge")
+        webView.loadUrl("https://" + host)
     }
 
     override fun onResume() {
@@ -130,7 +132,7 @@ class MainActivity : AppCompatActivity() {
 
         val path = intent.getStringExtra("path")
         if (path != null) {
-            webView.loadUrl("https://traq-dev.tokyotech.org$path")
+            webView.loadUrl("https://$host$path")
         }
 
         val channelID = intent.getStringExtra("tag")
@@ -155,9 +157,11 @@ class MainActivity : AppCompatActivity() {
 }
 
 class Bridge {
-    var token:String
-    constructor(token :String) {
-        this.token = token
+    companion object {
+      public var token:String = ""
+    }
+    constructor(_token :String) {
+        token = _token
     }
     @JavascriptInterface
     fun getFCMToken() : String {

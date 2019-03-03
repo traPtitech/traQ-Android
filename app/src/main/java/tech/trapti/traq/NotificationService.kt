@@ -138,6 +138,7 @@ class NotificationService : FirebaseMessagingService() {
             val editor = PreferenceManager.getDefaultSharedPreferences(this).edit()
             editor.putString("FCMToken", refreshedToken)
             editor.apply()
+            Bridge.token = refreshedToken
         }
     }
 }
